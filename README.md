@@ -34,7 +34,7 @@ This project is an Angry Birds-style game developed in Java using the LibGDX fra
 - Accessible from the gameplay screen to pause the game.
 - Allows players to resume, restart, or return to the main menu.
 
-  ![Pause Screen](assets/PauseScreenSS.jpeg)
+  ![Pause Screen](assets/PauseMenuSS.jpeg)
 
 ### 5. EndLevelScreen
 - Displays the player’s final score after a level.
