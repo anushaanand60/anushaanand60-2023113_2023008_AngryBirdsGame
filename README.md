@@ -14,24 +14,34 @@ This project is an Angry Birds-style game developed in Java using the LibGDX fra
 ### 1. HomeScreen
 - Displays the game logo.
 - Allows players to start or exit the game.
+
+
   ![Home Screen](assets/HomeScreenSS.jpeg)
 
 ### 2. MainMenuScreen
 - Shows available levels with locked and unlocked states based on player progress.
 - Allows sound control and navigation to the home screen.
 
+  ![Main Menu Screen](assets/MainMenuSS.jpeg)
+
 ### 3. GameScreen1
 - Main gameplay screen, where players launch birds and interact with structures.
 - Displays the player’s score and offers sound control.
+
+  ![Game Screen 1](assets/GameScreenSS.jpeg)
 
 ### 4. PauseScreen
 - Accessible from the gameplay screen to pause the game.
 - Allows players to resume, restart, or return to the main menu.
 
+  ![Pause Screen](assets/PauseScreenSS.jpeg)
+
 ### 5. EndLevelScreen
 - Displays the player’s final score after a level.
 - Provides options to retry the level, proceed to the next level, or return to the main menu.
 
+  ![End Level Screen](assets/EndLevelWinSS.jpeg)
+  ![End Level Screen](assets/EndLevelLoseSS.jpeg)
 ---
 
 ## Code Flow of the Game
