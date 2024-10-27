@@ -15,7 +15,6 @@ This project is an Angry Birds-style game developed in Java using the LibGDX fra
 - Displays the game logo.
 - Allows players to start or exit the game.
 
-
   ![Home Screen](assets/HomeScreenSS.jpeg)
 
 ### 2. MainMenuScreen
@@ -55,8 +54,12 @@ This project is an Angry Birds-style game developed in Java using the LibGDX fra
 
 ### 3. Main Menu Flow
 - **Level Buttons**:
-  - Players can select levels based on coins (representing progress or achievements).
-  - Level 1 is always unlocked; other levels unlock as players earn coins.
+  - Players can select levels based on score (representing progress or achievements).
+  - Level 1 is always unlocked; other levels unlock as players earn score.
+    - **Level 1**: Score 100 points to unlock Level 2.
+    - **Level 2**: Score another 100 points (200 points total) to unlock Level 3.
+    - **Level 3**: Score another 100 points (300 points total) to unlock Level 4.
+    - **Level 4**: Score another 100 points (400 points total) to win the game.
   - Selecting Level 1 transitions to `GameScreen1`.
 - **Back Button**: Returns to `HomeScreen`.
 
