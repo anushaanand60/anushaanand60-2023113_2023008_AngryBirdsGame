@@ -9,7 +9,7 @@ This project is an Angry Birds-style game developed in Java using the LibGDX fra
 
 ---
 
-## Features
+## Features and Game Screenshots
 
 ### 1. HomeScreen
 - Displays the game logo.
