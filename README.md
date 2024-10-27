@@ -14,6 +14,7 @@ This project is an Angry Birds-style game developed in Java using the LibGDX fra
 ### 1. HomeScreen
 - Displays the game logo.
 - Allows players to start or exit the game.
+  ![Home Screen](assets/HomeScreenSS.jpeg)
 
 ### 2. MainMenuScreen
 - Shows available levels with locked and unlocked states based on player progress.
