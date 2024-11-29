@@ -69,7 +69,7 @@ public class EndLevelScreen implements Screen {
         scoreY = bannerY + 15;
 
         font.draw(batch, bannerMessage, messageX, messageY);
-        font.draw(batch, "Total Hits: " + score, scoreX, scoreY);
+        font.draw(batch, "Score: " + score, scoreX, scoreY);
 
         float buttonScale1 = 0.43f;
         float buttonScale2 = 0.60f;
