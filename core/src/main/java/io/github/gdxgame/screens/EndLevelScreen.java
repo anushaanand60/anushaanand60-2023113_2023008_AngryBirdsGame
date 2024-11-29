@@ -15,11 +15,14 @@ public class EndLevelScreen implements Screen {
     private MyGame game;
     private Texture redBanner, restartButtonImage, nextLevelButtonImage, backButtonImage, soundOnButtonImage, soundOffButtonImage, pauseBg;
     private int score;
-    private float buttonWidth, buttonHeight;
+    private boolean isWin;
+    private int currentLevel;
 
-    public EndLevelScreen(MyGame game, int score) {
+    public EndLevelScreen(MyGame game, int score, boolean isWin, int currentLevel) {
         this.game = game;
         this.score = score;
+        this.isWin = isWin;
+        this.currentLevel = currentLevel;
     }
 
     @Override
@@ -33,8 +36,6 @@ public class EndLevelScreen implements Screen {
         soundOnButtonImage = new Texture(Gdx.files.internal("sound_on.png"));
         soundOffButtonImage = new Texture(Gdx.files.internal("sound_off.png"));
         pauseBg = new Texture(Gdx.files.internal("pause_bg.png"));
-        buttonWidth = nextLevelButtonImage.getWidth();
-        buttonHeight = nextLevelButtonImage.getHeight();
         game.manageBackgroundMusic();
     }
 
@@ -56,28 +57,19 @@ public class EndLevelScreen implements Screen {
         float bannerY = componentY + componentHeight - bannerHeight / 2;
         batch.draw(redBanner, bannerX, bannerY, bannerWidth, bannerHeight);
 
-        String bannerMessage;
+        String bannerMessage = getBannerMessage();
         float messageX, messageY, scoreX, scoreY;
         font.getData().setScale(0.9f);
         font.setColor(Color.GOLD);
 
-        if (score >= 100) {
-            bannerMessage = "    Yay\nyou won!";
-            float messageWidth = font.draw(batch, bannerMessage, 0, 0).width;
-            messageX = bannerX + (bannerWidth - messageWidth) / 2;
-            messageY = bannerY + bannerHeight / 1.125f;
-            scoreX = bannerX + bannerWidth / 2 - 78;
-            scoreY = bannerY + 15;
-        } else {
-            bannerMessage = "You\nlost!";
-            messageX = bannerX + bannerWidth / 1.65f - (bannerMessage.length() * 7);
-            messageY = bannerY + bannerHeight / 1.1f;
-            scoreX = bannerX + bannerWidth / 2 - 60;
-            scoreY = bannerY + 15;
-        }
+        float messageWidth = font.draw(batch, bannerMessage, 0, 0).width;
+        messageX = bannerX + (bannerWidth - messageWidth) / 2;
+        messageY = bannerY + bannerHeight / 1.125f;
+        scoreX = bannerX + bannerWidth / 2 - 78;
+        scoreY = bannerY + 15;
 
         font.draw(batch, bannerMessage, messageX, messageY);
-        font.draw(batch, "Score: " + score, scoreX, scoreY);
+        font.draw(batch, "Total Hits: " + score, scoreX, scoreY);
 
         float buttonScale1 = 0.43f;
         float buttonScale2 = 0.60f;
@@ -117,20 +109,67 @@ public class EndLevelScreen implements Screen {
             int x = Gdx.input.getX();
             int y = Gdx.graphics.getHeight() - Gdx.input.getY();
 
-            if (isButtonTouched(x, y, nextButtonX, nextButtonY, nextButtonWidth, nextButtonHeight)) {}
+            if (isButtonTouched(x, y, nextButtonX, nextButtonY, nextButtonWidth, nextButtonHeight)) {
+                handleNextLevel();
+            }
 
             if (isButtonTouched(x, y, restartButtonX, restartButtonY, restartButtonWidth, restartButtonHeight)) {
-                game.setGameScreen(MyGame.ScreenType.GAME1);
+                restartLevel();
             }
 
             if (isButtonTouched(x, y, backButtonX, backButtonY, backButtonWidth, backButtonHeight)) {
-                game.setGameScreen(MyGame.ScreenType.MAIN_MENU);
+                game.setScreen(new MainMenuScreen(game));
             }
 
             if (isButtonTouched(x, y, soundButtonX, soundButtonY, soundButtonWidth, soundButtonHeight)) {
                 game.toggleSound();
             }
         }
+    }
+
+    private void handleNextLevel() {
+        if (isWin) {
+            switch (currentLevel + 1) {
+                case 2:
+                    game.setGameScreen(MyGame.ScreenType.GAME2);
+                    break;
+                case 3:
+                    game.setGameScreen(MyGame.ScreenType.GAME3);
+                    break;
+                case 4:
+                    game.setGameScreen(MyGame.ScreenType.GAME4);
+                    break;
+                default:
+                    game.setScreen(new MainMenuScreen(game));
+                    break;
+            }
+        } else {
+            game.setScreen(new IntermediateScreen(game, currentLevel));
+        }
+    }
+
+    private void restartLevel() {
+        switch (currentLevel) {
+            case 1:
+                game.setGameScreen(MyGame.ScreenType.GAME1);
+                break;
+            case 2:
+                game.setGameScreen(MyGame.ScreenType.GAME2);
+                break;
+            case 3:
+                game.setGameScreen(MyGame.ScreenType.GAME3);
+                break;
+            case 4:
+                game.setGameScreen(MyGame.ScreenType.GAME4);
+                break;
+            default:
+                game.setScreen(new MainMenuScreen(game));
+                break;
+        }
+    }
+
+    protected String getBannerMessage() {
+        return "End of Level"; // Default message, to be overridden
     }
 
     private boolean isButtonTouched(int touchX, int touchY, float buttonX, float buttonY, float buttonWidth, float buttonHeight) {

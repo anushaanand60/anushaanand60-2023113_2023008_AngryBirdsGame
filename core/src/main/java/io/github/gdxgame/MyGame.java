@@ -7,16 +7,26 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import io.github.gdxgame.screens.*;
 
 public class MyGame extends Game {
-    public enum ScreenType { HOME, MAIN_MENU, GAME1, PAUSE, END_LEVEL }
+    public enum ScreenType {
+        HOME,
+        MAIN_MENU,
+        GAME1,
+        GAME2,
+        GAME3,
+        GAME4,
+        PAUSE,
+        END_LEVEL
+    }
     private Music backgroundMusic;
     public SpriteBatch batch;
-    public int coins;
+    public int score;
     private boolean soundOn;
+    private int highestUnlockedLevel = 1;
 
     @Override
     public void create() {
         batch = new SpriteBatch();
-        coins = 0;
+        score = 0;
         soundOn = true;
         backgroundMusic = Gdx.audio.newMusic(Gdx.files.internal("background_music.mp3"));
         backgroundMusic.setLooping(true);
@@ -25,20 +35,46 @@ public class MyGame extends Game {
     }
 
     public void setGameScreen(ScreenType screenType) {
+        setGameScreen(screenType, 0, 0);
+    }
+
+    public void setGameScreen(ScreenType screenType, int currentLevel, int score) {
         switch (screenType) {
-            case HOME: setScreen(new HomeScreen(this)); break;
-            case MAIN_MENU: setScreen(new MainMenuScreen(this, coins)); break;
-            case GAME1: setScreen(new GameScreen1(this)); break;
-            case PAUSE: setScreen(new PauseScreen(this)); break;
-            case END_LEVEL: setScreen(new EndLevelScreen(this, 0)); break;
-            default: throw new IllegalArgumentException("Unknown screen type: " + screenType);
+            case HOME:
+                setScreen(new HomeScreen(this));
+                break;
+            case MAIN_MENU:
+                setScreen(new MainMenuScreen(this));
+                break;
+            case GAME1:
+                setScreen(new GameScreen1(this));
+                break;
+            case GAME2:
+                setScreen(new GameScreen2(this));
+                break;
+            case GAME3:
+                setScreen(new GameScreen3(this));
+                break;
+            case GAME4:
+                setScreen(new GameScreen4(this));
+                break;
+            case PAUSE:
+                setScreen(new PauseScreen(this, currentLevel));
+                break;
+            case END_LEVEL:
+                throw new IllegalArgumentException("Use showEndLevelScreen(int score) to set END_LEVEL screen.");
+            default:
+                throw new IllegalArgumentException("Unknown screen type: " + screenType);
         }
         manageBackgroundMusic();
     }
 
-    public void showEndLevelScreen(int score) {
-        setScreen(new EndLevelScreen(this, score));
-        manageBackgroundMusic();
+    public int getHighestUnlockedLevel() {
+        return highestUnlockedLevel;
+    }
+
+    public void setHighestUnlockedLevel(int level) {
+        this.highestUnlockedLevel = level;
     }
 
     public boolean isSoundOn() {

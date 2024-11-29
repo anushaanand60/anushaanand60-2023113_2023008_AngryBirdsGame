@@ -30,7 +30,7 @@ public class GameScreen1 implements Screen {
     private MyGame game;
     private Stage stage;
     private SpriteBatch batch;
-    private Texture backgroundTexture, pauseButtonTexture, slingshotTexture, redBirdTexture, yellowBirdTexture, whiteBirdTexture, soundOnTexture, soundOffTexture, pigTexture, woodBlockTexture, quitButtonTexture, dummyButtonTexture;
+    private Texture backgroundTexture, pauseButtonTexture, slingshotTexture, redBirdTexture, yellowBirdTexture, whiteBirdTexture, soundOnTexture, soundOffTexture;
     private Image soundToggleButton, currentBird;
     private Label scoreLabel;
     private BitmapFont customFont;
@@ -59,9 +59,6 @@ public class GameScreen1 implements Screen {
         pauseButtonTexture = new Texture(Gdx.files.internal("Pause_button.png"));
         soundOnTexture = new Texture(Gdx.files.internal("sound_on.png"));
         soundOffTexture = new Texture(Gdx.files.internal("sound_off.png"));
-        woodBlockTexture = new Texture(Gdx.files.internal("wood_square.png"));
-        quitButtonTexture = new Texture(Gdx.files.internal("quit_button.png"));
-        dummyButtonTexture = new Texture(Gdx.files.internal("dummy_button.png"));
         slingshotTexture = new Texture(Gdx.files.internal("slingshot.png"));
         redBirdTexture = new Texture(Gdx.files.internal("bird_1.png"));
         yellowBirdTexture = new Texture(Gdx.files.internal("bird_2.png"));

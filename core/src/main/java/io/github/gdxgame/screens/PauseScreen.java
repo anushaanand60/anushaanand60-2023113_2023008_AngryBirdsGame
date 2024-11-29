@@ -13,14 +13,15 @@ public class PauseScreen implements Screen {
     private BitmapFont font;
     private Texture continueButton, restartButton, backButton, redBanner, pauseBg;
     private MyGame game;
-    private boolean soundOn;
     private Music backgroundMusic;
+    private int currentLevel;
 
-    public PauseScreen(MyGame game) {
+    public PauseScreen(MyGame game, int currentLevel) {
         this.game = game;
+        this.currentLevel = currentLevel > 0 ? currentLevel : 1;
         backgroundMusic = Gdx.audio.newMusic(Gdx.files.internal("background_music.mp3"));
         backgroundMusic.setLooping(true);
-        if (soundOn) backgroundMusic.play();
+        backgroundMusic.play();
     }
 
     @Override
@@ -74,19 +75,41 @@ public class PauseScreen implements Screen {
         if (Gdx.input.isTouched()) {
             int x = Gdx.input.getX(), y = Gdx.graphics.getHeight() - Gdx.input.getY();
             if (isButtonTouched(x, y, continueButtonX, continueButtonY, continueButtonWidth, continueButtonHeight)) {
-                game.setScreen(new GameScreen1(game));
-            }
-            if (isButtonTouched(x, y, restartButtonX, restartButtonY, restartButtonWidth, restartButtonHeight)) {
-                game.setScreen(new GameScreen1(game));
-            }
-            if (isButtonTouched(x, y, backButtonX, backButtonY, backButtonWidth, backButtonHeight)) {
-                game.setScreen(new MainMenuScreen(game));
+                continueGame();
+            } else if (isButtonTouched(x, y, restartButtonX, restartButtonY, restartButtonWidth, restartButtonHeight)) {
+                restartLevel();
+            } else if (isButtonTouched(x, y, backButtonX, backButtonY, backButtonWidth, backButtonHeight)) {
+                game.setGameScreen(MyGame.ScreenType.MAIN_MENU);
             }
         }
     }
 
     private boolean isButtonTouched(int touchX, int touchY, float buttonX, float buttonY, float buttonWidth, float buttonHeight) {
         return touchX >= buttonX && touchX <= buttonX + buttonWidth && touchY >= buttonY && touchY <= buttonY + buttonHeight;
+    }
+
+    private void continueGame() {
+        switch (currentLevel) {
+            case 1:
+                game.setGameScreen(MyGame.ScreenType.GAME1, currentLevel, game.score);
+                break;
+            case 2:
+                game.setGameScreen(MyGame.ScreenType.GAME2, currentLevel, game.score);
+                break;
+            case 3:
+                game.setGameScreen(MyGame.ScreenType.GAME3, currentLevel, game.score);
+                break;
+            case 4:
+                game.setGameScreen(MyGame.ScreenType.GAME4, currentLevel, game.score);
+                break;
+            default:
+                game.setGameScreen(MyGame.ScreenType.MAIN_MENU);
+                break;
+        }
+    }
+
+    private void restartLevel() {
+        continueGame();
     }
 
     @Override

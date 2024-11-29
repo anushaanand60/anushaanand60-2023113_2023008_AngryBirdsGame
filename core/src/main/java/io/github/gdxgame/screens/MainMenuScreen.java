@@ -12,13 +12,7 @@ public class MainMenuScreen implements Screen {
     private SpriteBatch batch;
     private Texture background, soundOnButton, soundOffButton, level1, level2, level3, level4, lockedLevel, backButton;
     private BitmapFont font;
-    private int score = 0;
     private MyGame game;
-
-    public MainMenuScreen(MyGame game, int score) {
-        this.game = game;
-        this.score = score;
-    }
 
     public MainMenuScreen(MyGame game) {
         this.game = game;
@@ -45,7 +39,6 @@ public class MainMenuScreen implements Screen {
     public void render(float delta) {
         batch.begin();
         batch.draw(background, 0, 0, Gdx.graphics.getWidth(), Gdx.graphics.getHeight());
-        font.draw(batch, "Score: " + score, 20, Gdx.graphics.getHeight() - 30);
 
         float soundButtonWidth = soundOnButton.getWidth() * 0.3f, soundButtonHeight = soundOnButton.getHeight() * 0.3f;
         float soundButtonX = Gdx.graphics.getWidth() - soundButtonWidth - 10, soundButtonY = 10;
@@ -72,26 +65,53 @@ public class MainMenuScreen implements Screen {
     }
 
     private void drawLevels() {
-        float levelIconSize = 128, totalWidth = (levelIconSize * 2) + 20, totalHeight = (levelIconSize * 2) + 20;
-        float startX = (Gdx.graphics.getWidth() - totalWidth) / 2, startY = (Gdx.graphics.getHeight() / 3) + (levelIconSize / 1.5f);
-        float colSpacing = levelIconSize + 20, rowSpacing = levelIconSize + 20;
+        int highestUnlockedLevel = game.getHighestUnlockedLevel();
+        float levelIconSize = 128;
+        float totalWidth = (levelIconSize * 2) + 20;
+        float startX = (Gdx.graphics.getWidth() - totalWidth) / 2;
+        float startY = (Gdx.graphics.getHeight() / 3) + (levelIconSize / 1.5f);
+        float colSpacing = levelIconSize + 20;
+        float rowSpacing = levelIconSize + 20;
 
         batch.draw(level1, startX, startY, levelIconSize, levelIconSize);
-        batch.draw(level2, startX + colSpacing, startY, levelIconSize, levelIconSize);
-        if (score < 100) batch.draw(lockedLevel, startX + colSpacing, startY + 10, levelIconSize, levelIconSize);
-        batch.draw(level3, startX, startY - rowSpacing, levelIconSize, levelIconSize);
-        if (score < 200) batch.draw(lockedLevel, startX, startY - rowSpacing + 10, levelIconSize, levelIconSize);
-        batch.draw(level4, startX + colSpacing, startY - rowSpacing, levelIconSize, levelIconSize);
-        if (score < 300) batch.draw(lockedLevel, startX + colSpacing, startY - rowSpacing + 10, levelIconSize, levelIconSize);
+        if (highestUnlockedLevel >= 2) {
+            batch.draw(level2, startX + colSpacing, startY, levelIconSize, levelIconSize);
+        } else {
+            batch.draw(level2, startX + colSpacing, startY, levelIconSize, levelIconSize);
+            batch.draw(lockedLevel, startX + colSpacing, startY + 10, levelIconSize, levelIconSize);
+        }
+
+        if (highestUnlockedLevel >= 3) {
+            batch.draw(level3, startX, startY - rowSpacing, levelIconSize, levelIconSize);
+        } else {
+            batch.draw(level3, startX, startY - rowSpacing, levelIconSize, levelIconSize);
+            batch.draw(lockedLevel, startX, startY - rowSpacing + 10, levelIconSize, levelIconSize);
+        }
+
+        if (highestUnlockedLevel >= 4) {
+            batch.draw(level4, startX + colSpacing, startY - rowSpacing, levelIconSize, levelIconSize);
+        } else {
+            batch.draw(level4, startX + colSpacing, startY - rowSpacing, levelIconSize, levelIconSize);
+            batch.draw(lockedLevel, startX + colSpacing, startY - rowSpacing + 10, levelIconSize, levelIconSize);
+        }
     }
 
     private void handleLevelClicks(int x, int y) {
+        int highestUnlockedLevel = game.getHighestUnlockedLevel();
         float levelIconSize = 128, totalWidth = (levelIconSize * 2) + 20;
         float startX = (Gdx.graphics.getWidth() - totalWidth) / 2, startY = (Gdx.graphics.getHeight() / 3) + (levelIconSize / 1.5f);
         float colSpacing = levelIconSize + 20, rowSpacing = levelIconSize + 20;
-
         if (x >= startX && x <= startX + levelIconSize && y >= startY && y <= startY + levelIconSize) {
             game.setScreen(new GameScreen1(game));
+        }
+        if (highestUnlockedLevel >= 2 && x >= startX + colSpacing && x <= startX + colSpacing + levelIconSize && y >= startY && y <= startY + levelIconSize) {
+            game.setScreen(new GameScreen2(game));
+        }
+        if (highestUnlockedLevel >= 3 && x >= startX && x <= startX + levelIconSize && y >= startY - rowSpacing && y <= startY - rowSpacing + levelIconSize) {
+            game.setScreen(new GameScreen3(game));
+        }
+        if (highestUnlockedLevel >= 4 && x >= startX + colSpacing && x <= startX + colSpacing + levelIconSize && y >= startY - rowSpacing && y <= startY - rowSpacing + levelIconSize) {
+            game.setScreen(new GameScreen4(game));
         }
     }
 
