@@ -14,54 +14,58 @@ import com.badlogic.gdx.scenes.scene2d.ui.Image;
 import com.badlogic.gdx.scenes.scene2d.ui.Label;
 import com.badlogic.gdx.scenes.scene2d.utils.ClickListener;
 import com.badlogic.gdx.utils.viewport.ScreenViewport;
-import com.badlogic.gdx.scenes.scene2d.ui.Label.LabelStyle;
 import io.github.gdxgame.MyGame;
 import com.badlogic.gdx.math.Vector2;
+import io.github.gdxgame.components.Bird;
+import io.github.gdxgame.components.Block;
+import io.github.gdxgame.components.Pig;
+import io.github.gdxgame.util.Physics;
+
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Queue;
+import java.util.LinkedList;
 
 public class GameScreen1 implements Screen {
-
     private MyGame game;
     private Stage stage;
     private SpriteBatch batch;
-    private Texture backgroundTexture;
-    private Texture pauseButtonTexture;
-    private Texture slingshotTexture;
-    private Texture redBirdTexture;
-    private Texture soundOnTexture;
-    private Texture soundOffTexture;
-    private Texture pigTexture;
-    private Texture woodBlockTexture;
-    private Texture quitButtonTexture;
-    private Texture dummyButtonTexture;  // Dummy button texture
-    private Image soundToggleButton;
+    private Texture backgroundTexture, pauseButtonTexture, slingshotTexture, redBirdTexture, yellowBirdTexture, whiteBirdTexture, soundOnTexture, soundOffTexture, pigTexture, woodBlockTexture, quitButtonTexture, dummyButtonTexture;
+    private Image soundToggleButton, currentBird;
     private Label scoreLabel;
     private BitmapFont customFont;
-    private int score;
     private ShapeRenderer shapeRenderer;
+
+    private int score;
+    private int currentLevel;
     private Vector2 birdStartPosition, birdVelocity, gravity;
     private boolean isDragging, birdLaunched;
     private List<Vector2> trajectoryPoints;
 
+    private List<Block> obstacles;
+    private List<Pig> pigs;
+    private Queue<Image> birdQueue;
+    private List<Image> linedUpBirds;
+
     public GameScreen1(MyGame game) {
         this.game = game;
+        this.currentLevel = 1;
         shapeRenderer = new ShapeRenderer();
-        this.score = 0;
+        score = 0;
         stage = new Stage(new ScreenViewport());
         batch = new SpriteBatch();
         Gdx.input.setInputProcessor(stage);
-
         backgroundTexture = new Texture(Gdx.files.internal("bg1.jpg"));
         pauseButtonTexture = new Texture(Gdx.files.internal("Pause_button.png"));
-        slingshotTexture = new Texture(Gdx.files.internal("slingshot.png"));
-        redBirdTexture = new Texture(Gdx.files.internal("bird_1.png"));
         soundOnTexture = new Texture(Gdx.files.internal("sound_on.png"));
         soundOffTexture = new Texture(Gdx.files.internal("sound_off.png"));
-        pigTexture = new Texture(Gdx.files.internal("pig_soldier.png"));
         woodBlockTexture = new Texture(Gdx.files.internal("wood_square.png"));
         quitButtonTexture = new Texture(Gdx.files.internal("quit_button.png"));
-        dummyButtonTexture = new Texture(Gdx.files.internal("dummy_button.png")); // Dummy button texture
+        dummyButtonTexture = new Texture(Gdx.files.internal("dummy_button.png"));
+        slingshotTexture = new Texture(Gdx.files.internal("slingshot.png"));
+        redBirdTexture = new Texture(Gdx.files.internal("bird_1.png"));
+        yellowBirdTexture = new Texture(Gdx.files.internal("bird_2.png"));
+        whiteBirdTexture = new Texture(Gdx.files.internal("bird_4.png"));
         customFont = new BitmapFont(Gdx.files.internal("myfont.fnt"));
         birdStartPosition = new Vector2(150, 100);
         birdVelocity = new Vector2(0, 0);
@@ -69,9 +73,11 @@ public class GameScreen1 implements Screen {
         isDragging = false;
         birdLaunched = false;
         trajectoryPoints = new ArrayList<>();
+        birdQueue = new LinkedList<>();
+
         setupBackground();
         setupUI();
-        setupSlingshotAndBirds();
+        setupSlingshotAndBird();
         setupStructures();
     }
 
@@ -88,7 +94,7 @@ public class GameScreen1 implements Screen {
         pauseButton.addListener(new ClickListener() {
             @Override
             public void clicked(InputEvent event, float x, float y) {
-                game.setGameScreen(MyGame.ScreenType.PAUSE);
+                game.setGameScreen(MyGame.ScreenType.PAUSE, currentLevel, score);
             }
         });
         stage.addActor(pauseButton);
@@ -103,112 +109,19 @@ public class GameScreen1 implements Screen {
             }
         });
         stage.addActor(soundToggleButton);
-        scoreLabel = new Label("Score\n" + score, new LabelStyle(customFont, Color.GOLD));
+        scoreLabel = new Label("Score\n" + score, new Label.LabelStyle(customFont, Color.GOLD));
         scoreLabel.setPosition(Gdx.graphics.getWidth() - 100, Gdx.graphics.getHeight() - 85);
         stage.addActor(scoreLabel);
     }
+
 
     private void setupSlingshotAndBird() {
         Image slingshot = new Image(slingshotTexture);
         slingshot.setSize(60, 100);
         slingshot.setPosition(birdStartPosition.x - 30, birdStartPosition.y - 30);
         stage.addActor(slingshot);
-        setupBirds(birdStartPosition.x + 50, birdStartPosition.y - 20, 40, 40, 3);
-        bird = new Image(redBirdTexture);
-        bird.setSize(40, 40);
-        bird.setPosition(birdStartPosition.x - 30, birdStartPosition.y + 35);
-        stage.addActor(bird);
-        bird.addListener(new ClickListener() {
-            @Override
-            public boolean touchDown(InputEvent event, float x, float y, int pointer, int button) {
-                if (!birdLaunched) isDragging = true;
-                return true;
-            }
-            @Override
-            public void touchDragged(InputEvent event, float x, float y, int pointer) {
-                if (isDragging) {
-                    bird.setPosition(Gdx.input.getX() - bird.getWidth() / 2, Gdx.graphics.getHeight() - Gdx.input.getY() - bird.getHeight() / 2);
-                    calculateTrajectory();
-                }
-            }
-            @Override
-            public void touchUp(InputEvent event, float x, float y, int pointer, int button) {
-                if (isDragging) {
-                    isDragging = false;
-                    birdLaunched = true;
-                    birdVelocity.set(birdStartPosition.x - bird.getX(), birdStartPosition.y - bird.getY()).scl(5);
-                }
-            }
-        });
-    }
-
-    private void setupBirds(float startX, float startY, float birdWidth, float birdHeight, int numberOfBirds) {
-        Texture[] birdTextures = {
-            new Texture("bird_1.png"),
-            new Texture("bird_2.png"),
-            new Texture("bird_3.png"),
-            redBirdTexture
-        };
-        for (int i = 0; i < numberOfBirds; i++) {
-            Image bird = new Image(birdTextures[i % birdTextures.length]);
-            bird.setSize(birdWidth, birdHeight);
-            bird.setPosition(startX - 105 - i * (birdWidth), startY - 10);
-            stage.addActor(bird);
-        }
-    }
-
-    private void calculateTrajectory() {
-        trajectoryPoints.clear();
-        Vector2 velocity = new Vector2(birdStartPosition.x - bird.getX(), birdStartPosition.y - bird.getY()).scl(5);
-        Vector2 position = new Vector2(bird.getX(), bird.getY());
-        for (int i = 0; i < 30; i++) {
-            position.add(velocity.x * 0.1f, velocity.y * 0.1f);
-            velocity.add(gravity.x * 0.1f, gravity.y * 0.1f);
-            trajectoryPoints.add(new Vector2(position.x, position.y));
-        }
-    }
-
-    private void setupStructures() {
-        float baseX = 350, baseY = 70;
-        Texture woodHoriz = new Texture(Gdx.files.internal("wood_horizontal1.png")), glassBox = new Texture(Gdx.files.internal("glass_box.png")), stoneRect = new Texture(Gdx.files.internal("stone_rectangle.png"));
-        for (int i = 0; i < 4; i++) {
-            Image woodBlock = new Image(woodHoriz);
-            woodBlock.setSize(50, 20);
-            woodBlock.setPosition(baseX + i * 50, baseY);
-            stage.addActor(woodBlock);
-        }
-        for (int i = 0; i <= 3; i += 3) {
-            Image woodColumn = new Image(woodHoriz);
-            woodColumn.setSize(20, 80);
-            woodColumn.setPosition(baseX + i * 60, baseY + 20);
-            stage.addActor(woodColumn);
-        }
-        Image woodBlock = new Image(woodHoriz);
-        woodBlock.setSize(205, 20);
-        woodBlock.setPosition(baseX, baseY + 100);
-        stage.addActor(woodBlock);
-        for (int i = 0; i <= 2; i += 2) {
-            Image woodColumn = new Image(woodHoriz);
-            woodColumn.setSize(20, 80);
-            woodColumn.setPosition(baseX + 38 + i * 50, baseY + 120);
-            stage.addActor(woodColumn);
-        }
-        Image glassBlock = new Image(glassBox);
-        glassBlock.setSize(120, 65);
-        glassBlock.setPosition(baseX + 40, baseY + 200);
-        stage.addActor(glassBlock);
-        Image stoneBlock = new Image(stoneRect);
-        stoneBlock.setSize(40, 40);
-        stoneBlock.setPosition(baseX + 80, baseY + 265);
-        stage.addActor(stoneBlock);
-        Image pig1 = new Image(new Texture(Gdx.files.internal("pig_minister.png")));
-        pig1.setSize(40, 40);
-        pig1.setPosition(baseX + 79, baseY + 120);
-        stage.addActor(pig1);
-        Image pig2 = new Image(new Texture(Gdx.files.internal("pig_king.png")));
-        pig2.setSize(40, 40);
-        pig2.setPosition(baseX + 80, baseY + 210);
-        stage.addActor(pig2);
+        setupBirds();
+        loadNextBird();
     }
 
     @Override
@@ -225,26 +138,222 @@ public class GameScreen1 implements Screen {
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
         stage.act(delta);
         stage.draw();
-        if (bird != null) {
+
+        if (currentBird != null) {
             shapeRenderer.setProjectionMatrix(stage.getViewport().getCamera().combined);
             shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
             shapeRenderer.setColor(Color.BLACK);
-            for (Vector2 point : trajectoryPoints) shapeRenderer.circle(point.x, point.y, 2);
+
+            for (Vector2 point : trajectoryPoints) {
+                shapeRenderer.circle(point.x, point.y, 2);
+            }
             shapeRenderer.end();
+
             if (birdLaunched && !isDragging) {
                 birdVelocity.add(gravity.x * delta, gravity.y * delta);
-                bird.setPosition(bird.getX() + birdVelocity.x * delta, bird.getY() + birdVelocity.y * delta);
-                if (bird.getY() < 0 || bird.getX() < 0 || bird.getX() > Gdx.graphics.getWidth()) resetBird();
+                currentBird.setPosition(
+                    currentBird.getX() + birdVelocity.x * delta,
+                    currentBird.getY() + birdVelocity.y * delta
+                );
+
+                int impact = ((Bird) currentBird).getImpact();
+                boolean collisionOccurred = Physics.handleCollisions(currentBird, obstacles, pigs, impact);
+                if (collisionOccurred) {
+                    score += impact;
+                    scoreLabel.setText("Score\n" + score);
+                    loadNextBird();
+                }
+
+                if (currentBird.getY() < 0 || currentBird.getX() < 0 || currentBird.getX() > Gdx.graphics.getWidth() || collisionOccurred) {
+                    reloadCurrentBird();
+                }
+
+                checkWinLoseConditions();
             }
         }
     }
 
-    private void resetBird() {
-        bird.setPosition(birdStartPosition.x - 30, birdStartPosition.y + 35);
-        birdVelocity.set(0, 0);
-        birdLaunched = false;
-        trajectoryPoints.clear();
+    private void checkWinLoseConditions() {
+        if (pigs.isEmpty()) {
+            game.setScreen(new WinScreen(game, score, currentLevel));
+            return;
+        }
+        if (birdQueue.isEmpty() && !pigs.isEmpty()) {
+            game.setScreen(new LoseScreen(game, score, currentLevel));
+        }
     }
+
+    private void setupBirds() {
+        float birdWidth = 40, birdHeight = 40;
+        float lineupStartX = birdStartPosition.x - 95;
+        float lineupStartY = birdStartPosition.y - 40;
+
+        linedUpBirds = new ArrayList<>();
+        birdQueue = new LinkedList<>();
+        for (int i = 0; i < 10; i++) {
+            if (i % 3 == 0) {
+                birdQueue.add(new Bird(redBirdTexture, 1.2f, 2, 40, 40));
+            } else if (i % 3 == 1) {
+                birdQueue.add(new Bird(yellowBirdTexture, 1.5f, 2, 40 , 40));
+            } else if (i % 3 == 2) {
+                birdQueue.add(new Bird(whiteBirdTexture, 1.2f, 1, 40, 40));
+            }
+        }
+
+        for (int i = 0; i < 3; i++) {
+            if (!birdQueue.isEmpty()) {
+                Bird bird = (Bird) birdQueue.poll();
+                bird.setSize(birdWidth, birdHeight);
+                bird.setPosition(lineupStartX + 85 - i * birdWidth, lineupStartY);
+                linedUpBirds.add(bird);
+                stage.addActor(bird);
+            }
+        }
+    }
+
+
+    private void loadNextBird() {
+        if (birdQueue.isEmpty()) {
+            System.out.println("No more birds in the queue!");
+            return;
+        }
+
+        if (currentBird != null) {
+            stage.getActors().removeValue(currentBird, true);
+            currentBird = null;
+        }
+
+        if (!linedUpBirds.isEmpty()) {
+            Image birdToRemove = linedUpBirds.remove(0);
+
+            float lineupStartX = birdStartPosition.x - 95;
+            float lineupStartY = birdStartPosition.y - 40;
+            float birdWidth = 40;
+
+            for (int i = 0; i < linedUpBirds.size(); i++) {
+                Image bird = linedUpBirds.get(i);
+                bird.setPosition(lineupStartX + 85 - i * birdWidth, lineupStartY);
+            }
+
+            birdToRemove.setPosition(lineupStartX + 85 - linedUpBirds.size() * birdWidth, lineupStartY);
+            linedUpBirds.add(birdToRemove);
+        }
+
+        currentBird = birdQueue.poll();
+        if (currentBird != null) {
+            currentBird.setPosition(birdStartPosition.x - 30, birdStartPosition.y + 35);
+            stage.addActor(currentBird);
+
+            birdLaunched = false;
+            birdVelocity.set(0, 0);
+            trajectoryPoints.clear();
+            currentBird.clearListeners();
+            currentBird.addListener(new ClickListener() {
+                @Override
+                public boolean touchDown(InputEvent event, float x, float y, int pointer, int button) {
+                    if (!birdLaunched) isDragging = true;
+                    return true;
+                }
+                @Override
+                public void touchDragged(InputEvent event, float x, float y, int pointer) {
+                    if (isDragging) {
+                        currentBird.setPosition(
+                            Gdx.input.getX() - currentBird.getWidth() / 2,
+                            Gdx.graphics.getHeight() - Gdx.input.getY() - currentBird.getHeight() / 2
+                        );
+                        calculateTrajectory();
+                    }
+                }
+                @Override
+                public void touchUp(InputEvent event, float x, float y, int pointer, int button) {
+                    if (isDragging) {
+                        isDragging = false;
+                        birdLaunched = true;
+                        birdVelocity.set(
+                            birdStartPosition.x - currentBird.getX(),
+                            birdStartPosition.y - currentBird.getY()
+                        ).scl(5);
+                    }
+                }
+            });
+        } else {
+            System.out.println("Queue has birds, but none are loading!");
+        }
+    }
+
+    private void reloadCurrentBird() {
+        if (currentBird != null) {
+            currentBird.setPosition(birdStartPosition.x - 30, birdStartPosition.y + 35);
+            birdVelocity.set(0, 0);
+            birdLaunched = false;
+            trajectoryPoints.clear();
+        }
+    }
+
+
+    private void calculateTrajectory() {
+        trajectoryPoints = Physics.calculateTrajectory(
+            birdStartPosition,
+            new Vector2(currentBird.getX(), currentBird.getY()),
+            gravity,
+            30,
+            0.1f
+        );
+    }
+
+    private void setupStructures() {
+        obstacles = new ArrayList<>();
+        pigs = new ArrayList<>();
+
+        float baseX = 350, baseY = 70;
+
+        Texture woodTexture = new Texture(Gdx.files.internal("wood_horizontal1.png"));
+        Texture glassTexture = new Texture(Gdx.files.internal("glass_box.png"));
+        Texture stoneTexture = new Texture(Gdx.files.internal("stone_rectangle.png"));
+
+        for (int i = 0; i < 4; i++) {
+            Block woodBlock = new Block(woodTexture, baseX + i * 50, baseY, 50, 20, 2, "wood");
+            obstacles.add(woodBlock);
+            stage.addActor(woodBlock);
+        }
+
+        for (int i = 0; i <= 3; i += 3) {
+            Block woodColumn = new Block(woodTexture, baseX + i * 60, baseY + 20, 20, 80, 2, "wood");
+            obstacles.add(woodColumn);
+            stage.addActor(woodColumn);
+        }
+
+        Block firstFloor = new Block(woodTexture, baseX, baseY + 100, 205, 20, 2, "wood");
+        obstacles.add(firstFloor);
+        stage.addActor(firstFloor);
+
+        for (int i = 0; i <= 2; i += 2) {
+            Block glassColumn = new Block(glassTexture, baseX + 38 + i * 50, baseY + 120, 20, 80, 1, "glass");
+            obstacles.add(glassColumn);
+            stage.addActor(glassColumn);
+        }
+
+        Block glassBlock = new Block(glassTexture, baseX + 40, baseY + 200, 120, 65, 1, "glass");
+        obstacles.add(glassBlock);
+        stage.addActor(glassBlock);
+
+        Block stoneBlock = new Block(stoneTexture, baseX + 80, baseY + 265, 40, 40, 3, "stone");
+        obstacles.add(stoneBlock);
+        stage.addActor(stoneBlock);
+
+        Texture ministerTexture = new Texture(Gdx.files.internal("pig_minister.png"));
+        Texture kingTexture = new Texture(Gdx.files.internal("pig_king.png"));
+
+        Pig ministerPig = new Pig(ministerTexture, baseX + 80, baseY + 210, 40, 40, 1, "minister");
+        pigs.add(ministerPig);
+        stage.addActor(ministerPig);
+
+        Pig kingPig = new Pig(kingTexture, baseX + 79, baseY + 120, 40, 40, 3, "king");
+        pigs.add(kingPig);
+        stage.addActor(kingPig);
+    }
+
+
 
     @Override
     public void resize(int width, int height) {
