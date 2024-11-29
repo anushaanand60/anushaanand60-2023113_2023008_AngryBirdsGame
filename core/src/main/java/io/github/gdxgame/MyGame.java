@@ -17,6 +17,7 @@ public class MyGame extends Game {
         PAUSE,
         END_LEVEL
     }
+
     private Music backgroundMusic;
     public SpriteBatch batch;
     public int score;
@@ -39,6 +40,11 @@ public class MyGame extends Game {
     }
 
     public void setGameScreen(ScreenType screenType, int currentLevel, int score) {
+        if (getScreen() != null) {
+            getScreen().hide();
+            getScreen().dispose();
+        }
+
         switch (screenType) {
             case HOME:
                 setScreen(new HomeScreen(this));
@@ -66,7 +72,8 @@ public class MyGame extends Game {
             default:
                 throw new IllegalArgumentException("Unknown screen type: " + screenType);
         }
-        manageBackgroundMusic();
+
+        manageBackgroundMusic(); // Ensure the background music state matches soundOn
     }
 
     public int getHighestUnlockedLevel() {
@@ -87,8 +94,15 @@ public class MyGame extends Game {
     }
 
     public void manageBackgroundMusic() {
-        if (soundOn) backgroundMusic.play();
-        else backgroundMusic.pause();
+        if (soundOn) {
+            if (!backgroundMusic.isPlaying()) {
+                backgroundMusic.play(); // Play only if not already playing
+            }
+        } else {
+            if (backgroundMusic.isPlaying()) {
+                backgroundMusic.pause(); // Pause only if playing
+            }
+        }
     }
 
     @Override
@@ -103,3 +117,4 @@ public class MyGame extends Game {
         backgroundMusic.dispose();
     }
 }
+

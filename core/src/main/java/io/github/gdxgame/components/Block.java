@@ -28,4 +28,3 @@ public class Block extends Image {
         return material;
     }
 }
-
